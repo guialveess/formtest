@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { createFormularioSchema, updateFormularioSchema } from '@/lib/validations';
+import { createFormularioSchema } from '@/lib/validations';
 import { ZodError } from 'zod';
 
 export async function GET() {
@@ -13,26 +13,6 @@ export async function GET() {
   } catch (error) {
     console.error('[GET /api/forms]', error);
     return NextResponse.json({ error: 'Erro ao buscar formulários' }, { status: 500 });
-  }
-}
-
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
-  try {
-    const body = await request.json();
-    const parsed = updateFormularioSchema.parse(body);
-
-    const updated = await prisma.formulario.update({
-      where: { id: params.id },
-      data: parsed,
-    });
-
-    return NextResponse.json(updated);
-  } catch (error) {
-    console.error('[PUT /api/forms/:id]', error);
-    return NextResponse.json({ error: 'Erro ao atualizar formulário' }, { status: 500 });
   }
 }
 

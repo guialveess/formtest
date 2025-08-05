@@ -2,11 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { createPerguntaSchema } from '@/lib/validations';
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
-  const idFormulario = params.id;
+export async function POST(request: NextRequest) {
+  const url = new URL(request.url);
+  const pathnameParts = url.pathname.split('/');
+  const idFormulario = pathnameParts[pathnameParts.indexOf('forms') + 1];
 
   try {
     const body = await request.json();
