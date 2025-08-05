@@ -1,0 +1,117 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Formulario {
+  id        String               @id @default(uuid())
+  titulo    String               @db.VarChar(255)
+  descricao String?
+  ordem     Int                  @default(0)
+  createdAt DateTime             @default(now()) @map("created_at")
+  updatedAt DateTime             @updatedAt @map("updated_at")
+  respostas FormularioResposta[]
+  perguntas Pergunta[]
+
+  @@map("formulario")
+}
+
+model Pergunta {
+  id                 String                  @id @default(uuid())
+  idFormulario       String                  @map("id_formulario")
+  titulo             String                  @db.VarChar(255)
+  codigo             String                  @unique @db.VarChar(100)
+  orientacaoResposta String?                 @map("orientacao_resposta")
+  ordem              Int                     @default(0)
+  obrigatoria        Boolean                 @default(false)
+  subPergunta        Boolean                 @default(false) @map("sub_pergunta")
+  tipoPergunta       TipoPergunta            @map("tipo_pergunta")
+  createdAt          DateTime                @default(now()) @map("created_at")
+  updatedAt          DateTime                @updatedAt @map("updated_at")
+  respostas          OpcaoRespostaPergunta[]
+  opcoesRespostas    OpcaoResposta[]         @relation("PerguntaOpcoes")
+  formulario         Formulario              @relation(fields: [idFormulario], references: [id], onDelete: Cascade)
+  condicoesDestino   PerguntaCondicao[]      @relation("PerguntaDestino")
+  condicoesOrigem    PerguntaCondicao[]      @relation("PerguntaOrigem")
+
+  @@map("pergunta")
+}
+
+model OpcaoResposta {
+  id             String                  @id @default(uuid())
+  idPergunta     String                  @map("id_pergunta")
+  resposta       String
+  ordem          Int                     @default(0)
+  respostaAberta Boolean                 @default(false) @map("resposta_aberta")
+  createdAt      DateTime                @default(now()) @map("created_at")
+  respostas      OpcaoRespostaPergunta[]
+  pergunta       Pergunta                @relation("PerguntaOpcoes", fields: [idPergunta], references: [id], onDelete: Cascade)
+  condicoes      PerguntaCondicao[]
+
+  @@map("opcoes_respostas")
+}
+
+model FormularioResposta {
+  id           String                  @id @default(uuid())
+  formularioId String                  @map("id_formulario")
+  createdAt    DateTime                @default(now()) @map("created_at")
+  formulario   Formulario              @relation(fields: [formularioId], references: [id], onDelete: Cascade)
+  respostas    OpcaoRespostaPergunta[]
+
+  @@map("formulario_respostas")
+}
+
+model OpcaoRespostaPergunta {
+  id                   String             @id @default(uuid())
+  idOpcaoResposta      String?            @map("id_opcao_resposta")
+  idPergunta           String             @map("id_pergunta")
+  respostaTexto        String?            @map("resposta_texto")
+  respostaNumerica     Decimal?           @map("resposta_numerica") @db.Decimal(10, 2)
+  respostaBooleana     Boolean?           @map("resposta_booleana")
+  createdAt            DateTime           @default(now()) @map("created_at")
+  idFormularioResposta String             @map("id_formulario_resposta")
+  formularioResposta   FormularioResposta @relation(fields: [idFormularioResposta], references: [id], onDelete: Cascade)
+  opcaoResposta        OpcaoResposta?     @relation(fields: [idOpcaoResposta], references: [id], onDelete: Cascade)
+  pergunta             Pergunta           @relation(fields: [idPergunta], references: [id], onDelete: Cascade)
+
+  @@map("opcoes_resposta_pergunta")
+}
+
+model PerguntaCondicao {
+  id                String           @id @default(uuid())
+  perguntaOrigemId  String           @map("pergunta_origem_id")
+  perguntaDestinoId String           @map("pergunta_destino_id")
+  opcaoRespostaId   String?          @map("opcao_resposta_id")
+  operador          OperadorCondicao @default(EQUALS)
+  valorCondicao     String?          @map("valor_condicao")
+  createdAt         DateTime         @default(now()) @map("created_at")
+  opcaoResposta     OpcaoResposta?   @relation(fields: [opcaoRespostaId], references: [id], onDelete: Cascade)
+  perguntaDestino   Pergunta         @relation("PerguntaDestino", fields: [perguntaDestinoId], references: [id], onDelete: Cascade)
+  perguntaOrigem    Pergunta         @relation("PerguntaOrigem", fields: [perguntaOrigemId], references: [id], onDelete: Cascade)
+
+  @@map("pergunta_condicoes")
+}
+
+enum TipoPergunta {
+  SIM_NAO                       @map("Sim_Nao")
+  MULTIPLA_ESCOLHA              @map("multipla_escolha")
+  UNICA_ESCOLHA                 @map("unica_escolha")
+  TEXTO_LIVRE                   @map("texto_livre")
+  INTEIRO                       @map("Inteiro")
+  NUMERO_COM_DUAS_CASA_DECIMAIS @map("Numero_com_duas_casa_decimais")
+
+  @@map("tipo_pergunta")
+}
+
+enum OperadorCondicao {
+  EQUALS     @map("EQUALS")
+  NOT_EQUALS @map("NOT_EQUALS")
+  CONTAINS   @map("CONTAINS")
+
+  @@map("operador_condicao")
+}
