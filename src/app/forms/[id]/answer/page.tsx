@@ -1,15 +1,23 @@
 import { notFound } from 'next/navigation';
 import ChatForm from '@/components/forms/chat-form';
+import { prisma } from '@/lib/prisma';
 
 export default async function AnswerPage({ params }: { params: { id: string } }) {
-  const res = await fetch(`http://localhost:3001/api/forms/${params.id}`, {
-    next: { revalidate: 60 },
-    cache: 'no-store',
+  const form = await prisma.formulario.findUnique({
+    where: { id: params.id },
+    include: {
+      perguntas: {
+        orderBy: { ordem: 'asc' },
+        include: {
+          opcoesRespostas: {
+            orderBy: { ordem: 'asc' },
+          },
+        },
+      },
+    },
   });
 
-  if (!res.ok) return notFound();
-
-  const form = await res.json();
+  if (!form) return notFound();
 
   return (
     <div className="max-w-2xl mx-auto p-4">
