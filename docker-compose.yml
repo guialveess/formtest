@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: dynamic-forms-db
+    environment:
+      POSTGRES_DB: dynamic_forms
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "6565:5432"  # HOST:CONTAINER
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - dynamic-forms-network
+
+  app:
+    build: .
+    container_name: dynamic-forms-app
+    ports:
+      - "5656:5656"  # Aplicação acessível em http://localhost:5656
+    environment:
+      - NODE_ENV=development
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/dynamic_forms
+    depends_on:
+      - postgres
+    volumes:
+      - .:/app
+      - /app/node_modules
+    networks:
+      - dynamic-forms-network
+
+volumes:
+  postgres_data:
+
+networks:
+  dynamic-forms-network:
+    driver: bridge
