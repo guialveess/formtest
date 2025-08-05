@@ -2,13 +2,11 @@ import { notFound } from 'next/navigation';
 import ChatForm from '@/components/forms/chat-form';
 import { prisma } from '@/lib/prisma';
 
-type PageProps = {
-  params: {
-    id: string;
-  };
-};
-
-export default async function AnswerPage({ params }: PageProps) {
+export default async function AnswerPage({
+  params,
+}: {
+  params: Record<string, string>;
+}) {
   const form = await prisma.formulario.findUnique({
     where: { id: params.id },
     include: {
