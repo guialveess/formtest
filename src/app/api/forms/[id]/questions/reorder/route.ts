@@ -1,13 +1,16 @@
 import { prisma } from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
 
-export async function PUT(
-  req: NextRequest,
-  context: { params: { id: string } }
-) {
-  const { id } = context.params;
+export async function PUT(req: NextRequest) {
+  const url = new URL(req.url);
+  const id = url.pathname.split('/').filter(Boolean).at(-3); 
+
   const body = await req.json();
   const perguntas = body.perguntas;
+
+  if (!id) {
+    return NextResponse.json({ error: 'ID do formulário não informado' }, { status: 400 });
+  }
 
   try {
     const updates = await Promise.all(
